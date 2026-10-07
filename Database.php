@@ -1,14 +1,20 @@
 <?php
-$host = 'localhost';
-$dbname = 'may_tinh'; // Tên CSDL khớp với hình phpMyAdmin của bạn
-$username = 'root';
-$password = '';
+class Database {
+    private $host = 'localhost';
+    private $db_name = 'may_tinh';
+    private $username = 'root';
+    private $password = '';
+    public $conn;
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    // Cấu hình chế độ báo lỗi PDO sang Exception để dễ debug
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Lỗi kết nối cơ sở dữ liệu: " . $e->getMessage());
+    public function connect() {
+        $this->conn = null;
+        try {
+            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4", $this->username, $this->password);
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        } catch(PDOException $e) {
+            echo "Lỗi kết nối: " . $e->getMessage();
+        }
+        return $this->conn;
+    }
 }
 ?>
