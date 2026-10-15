@@ -1,8 +1,5 @@
 <?php
-/**
- * Layout header chung cho các trang quản trị (admin)
- * Biến $activePage được truyền từ controller để highlight menu đang chọn
- */
+
 if (!isset($activePage)) { $activePage = ''; }
 ?>
 <!DOCTYPE html>
