@@ -10,14 +10,19 @@
         <div class="card shadow">
             <div class="card-body">
                 <h3 class="text-center mb-4">THÊM HỘI VIÊN MỚI</h3>
+
+                <?php if (!empty($_SESSION['error_msg'])): ?>
+                    <div class="alert alert-danger py-2"><?= $_SESSION['error_msg']; unset($_SESSION['error_msg']); ?></div>
+                <?php endif; ?>
+
                 <form method="POST" action="index.php?route=members&action=add">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tên tài khoản:</label>
-                        <input type="text" name="username" class="form-control" required>
+                        <input type="text" name="username" class="form-control" placeholder="Nhập tên tài khoản..." required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Mật khẩu:</label>
-                        <input type="password" name="password" class="form-control" required>
+                        <input type="password" name="password" class="form-control" placeholder="Nhập mật khẩu..." required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Số dư ban đầu (VNĐ):</label>
