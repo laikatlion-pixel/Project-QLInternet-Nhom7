@@ -1,69 +1,99 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Quản Lý Máy Tính</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container my-4">
-        <h2 class="text-center mb-4">QUẢN LÝ DANH SÁCH MÁY TÍNH</h2>
-        
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <a href="index.php?route=machines&action=add" class="btn btn-success">+ Thêm máy mới</a>
-                <a href="index.php?route=home" class="btn btn-secondary">Về trang chủ</a>
-            </div>
+<?php $activePage = 'machine'; $pageTitle = 'Quản Lý Máy Tính'; ?>
 
-            <!-- Form tìm kiếm nhanh -->
-            <form method="GET" action="index.php" class="d-flex gap-2">
-                <input type="hidden" name="route" value="machines">
-                <input type="text" name="keyword" class="form-control" placeholder="Tìm tên máy, khu vực..." value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
-                <button type="submit" class="btn btn-primary">Tìm</button>
-            </form>
-        </div>
-
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <table class="table table-bordered table-striped align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Tên máy</th>
-                            <th>Khu vực</th>
-                            <th>Cấu hình</th>
-                            <th>Giá/giờ</th>
-                            <th>Trạng thái</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($machines)): ?>
-                            <?php foreach ($machines as $row): ?>
-                            <tr>
-                                <td><?= $row['id'] ?></td>
-                                <td><strong><?= htmlspecialchars($row['computer_name']) ?></strong></td>
-                                <td><?= htmlspecialchars($row['zone_name'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($row['specs'] ?? '') ?></td>
-                                <td><?= number_format($row['hourly_price']) ?> đ</td>
-                                <td>
-                                    <span class="badge bg-<?= $row['status'] == 'online' ? 'success' : 'secondary' ?>">
-                                        <?= $row['status'] ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="index.php?route=machines&action=edit&id=<?= $row['id'] ?>" class="btn btn-warning btn-sm">Sửa</a>
-                                    <a href="index.php?route=machines&action=delete&id=<?= $row['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa máy này?');">Xóa</a>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr><td colspan="7" class="text-center text-muted">Không có dữ liệu máy tính.</td></tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold">➕ Thêm Máy Tính Mới</div>
+    <div class="card-body">
+        <form method="POST" action="index.php?c=machine&a=store" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Tên máy tính:</label>
+                <input type="text" name="computer_name" class="form-control" placeholder="Ví dụ: MAY-01" required>
             </div>
-        </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Khu vực (Zone):</label>
+                <select name="zone_id" class="form-select" required>
+                    <option value="">-- Chọn Khu Vực --</option>
+                    <?php foreach ($dsZone as $z): ?>
+                        <option value="<?= $z['id'] ?>"><?= e($z['zone_name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Giá tiền / Giờ (VNĐ):</label>
+                <input type="number" name="hourly_price" class="form-control" min="0" step="500" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Cấu hình:</label>
+                <textarea name="specs" class="form-control" rows="2" placeholder="Nhập cấu hình máy..."></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Chi tiết ngoại vi:</label>
+                <textarea name="peripheral_details" class="form-control" rows="2" placeholder="Chuột, phím, tai nghe..."></textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-bold">Ghi chú:</label>
+                <input type="text" name="note" class="form-control" placeholder="Ghi chú thêm...">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-success fw-bold px-4">Thêm Máy Tính</button>
+            </div>
+        </form>
     </div>
-</body>
-</html>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <span class="fw-bold">🖥️ Danh Sách Máy Trạm</span>
+        <form method="GET" action="index.php" class="d-flex gap-2">
+            <input type="hidden" name="c" value="machine">
+            <input type="hidden" name="a" value="index">
+            <input type="text" name="keyword" class="form-control form-control-sm" placeholder="Tìm tên máy, khu vực..." value="<?= e($keyword) ?>">
+            <button type="submit" class="btn btn-outline-light btn-sm">Tìm kiếm</button>
+            <?php if ($keyword !== ''): ?>
+                <a href="index.php?c=machine&a=index" class="btn btn-secondary btn-sm">Hủy</a>
+            <?php endif; ?>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover table-striped align-middle mb-0 text-center">
+            <thead class="table-secondary">
+                <tr>
+                    <th>ID</th><th>Tên Máy</th><th>Khu Vực</th><th>Giá / Giờ</th>
+                    <th>Trạng Thái</th><th>Tổng Giờ</th><th>Ghi Chú</th><th>Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($dsMay)): ?>
+                    <tr><td colspan="8" class="text-muted py-3">Không tìm thấy máy tính nào phù hợp!</td></tr>
+                <?php else: ?>
+                    <?php foreach ($dsMay as $m): ?>
+                        <tr>
+                            <td><?= $m['id'] ?></td>
+                            <td class="fw-bold"><?= e($m['computer_name']) ?></td>
+                            <td>
+                                <?php
+                                    $zoneName = e($m['zone_name'] ?? 'Mặc định');
+                                    if (strpos($zoneName, 'Thường') !== false) { echo '🎮 ' . $zoneName; }
+                                    elseif (strpos($zoneName, 'Stream') !== false) { echo '🎙️ ' . $zoneName; }
+                                    elseif (strpos($zoneName, 'VIP') !== false) { echo '👑 ' . $zoneName; }
+                                    else { echo $zoneName; }
+                                ?>
+                            </td>
+                            <td><?= number_format($m['hourly_price']) ?> đ</td>
+                            <td>
+                                <span class="badge bg-<?= strtolower($m['status']) === 'online' ? 'success' : 'danger' ?>">
+                                    <?= strtoupper($m['status']) ?>
+                                </span>
+                            </td>
+                            <td><?= number_format($m['total_play_hours'], 2) ?> h</td>
+                            <td class="small text-muted"><?= e($m['note'] ?? '') ?></td>
+                            <td>
+                                <a href="index.php?c=machine&a=edit&id=<?= $m['id'] ?>" class="btn btn-sm btn-warning">Sửa</a>
+                                <a href="index.php?c=machine&a=destroy&id=<?= $m['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa máy này không?');">Xóa</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
