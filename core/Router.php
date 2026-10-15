@@ -1,17 +1,10 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Bộ định tuyến (Router) đơn giản - ánh xạ query string sang Controller & Action
- *
- * Cú pháp URL: index.php?c=<controller>&a=<action>&...
- * Ví dụ:       index.php?c=machine&a=edit&id=5
- */
+
 class Router
 {
-    /**
-     * Điều phối yêu cầu tới controller/action tương ứng
-     */
+  
     public function dispatch(): void
     {
         $controllerName = ucfirst(strtolower($_GET['c'] ?? 'dashboard')) . 'Controller';
