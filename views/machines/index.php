@@ -9,11 +9,18 @@
     <div class="container my-4">
         <h2 class="text-center mb-4">QUẢN LÝ DANH SÁCH MÁY TÍNH</h2>
         
-        <div class="row mb-3">
-            <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
                 <a href="index.php?route=machines&action=add" class="btn btn-success">+ Thêm máy mới</a>
                 <a href="index.php?route=home" class="btn btn-secondary">Về trang chủ</a>
             </div>
+
+            <!-- Form tìm kiếm nhanh -->
+            <form method="GET" action="index.php" class="d-flex gap-2">
+                <input type="hidden" name="route" value="machines">
+                <input type="text" name="keyword" class="form-control" placeholder="Tìm tên máy, khu vực..." value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
+                <button type="submit" class="btn btn-primary">Tìm</button>
+            </form>
         </div>
 
         <div class="card shadow-sm">
