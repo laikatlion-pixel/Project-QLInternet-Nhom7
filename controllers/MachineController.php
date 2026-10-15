@@ -1,48 +1,52 @@
 <?php
-require_once __DIR__ . '/../config/Database.php';
-require_once __DIR__ . '/../models/Machine.php';
+require_once __DIR__ . '/../models/MachineModel.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 class MachineController {
-    private $db;
-    private $machineModel;
+    private $model;
 
-    public function __construct() {
-        $database = new Database();
-        $this->db = $database->connect();
-        $this->machineModel = new Machine($this->db);
+    public function __construct($pdo) {
+        requireAdmin(); // Chặn nếu không phải admin[cite: 5, 10, 11, 12]
+        $this->model = new MachineModel($pdo);
     }
 
-    // Hiển thị danh sách
     public function index() {
-        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
-        $machines = $this->machineModel->getAll($keyword);
-        include __DIR__ . '/../views/machines/index.php';
+        $keyword = $_GET['keyword'] ?? '';
+        $machines = $this->model->getAllMachines($keyword);
+        // require_once __DIR__ . '/../views/machines/index.php'; // Tạo file view hiển thị danh sách
     }
 
-    // Xử lý thêm mới
     public function add() {
-        $zones = $this->machineModel->getZones();
-        $error = '';
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (empty($_POST['computer_name']) || empty($_POST['hourly_price'])) {
-                $error = 'Vui lòng điền đủ thông tin!';
+        $zones = $this->model->getZones();
+        if ($_SERVER["REQUEST_METHOD"] === "POST") {
+            $data = [
+                "computer_name"      => trim($_POST["computer_name"] ?? ""),
+                "zone_id"            => (int)($_POST["zone_id"] ?? 0),
+                "hourly_price"       => (int)($_POST["hourly_price"] ?? 0),
+                "specs"              => trim($_POST["specs"] ?? ""),
+                "note"               => trim($_POST["note"] ?? ""),
+                "peripheral_details" => trim($_POST["peripheral_details"] ?? "")
+            ];
+            if (!empty($data['computer_name']) && $data['hourly_price'] >= 0 && $data['zone_id'] > 0) {
+                $this->model->create($data);
+                $_SESSION['success_msg'] = "Thêm máy thành công!";
             } else {
-                $this->machineModel->create($_POST);
-                header('Location: index.php?action=index');
-                exit;
+                $_SESSION['error_msg'] = "Dữ liệu không hợp lệ!";
             }
+            header("Location: index.php?route=machines");
+            exit();
         }
-        include __DIR__ . '/../views/machines/add.php';
+        // require_once __DIR__ . '/../views/machines/add.php';
     }
 
-    // Xử lý xóa
     public function delete() {
-        if (isset($_GET['id'])) {
-            $this->machineModel->delete($_GET['id']);
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id > 0) {
+            $this->model->delete($id);
+            $_SESSION['success_msg'] = "Xóa máy thành công!";
         }
-        header('Location: index.php?action=index');
-        exit;
+        header("Location: index.php?route=machines");
+        exit();
     }
 }
 ?>
