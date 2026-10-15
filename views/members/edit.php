@@ -16,7 +16,7 @@
                         <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($member['username']) ?>" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Mật khẩu mới: <span class="text-muted fw-normal small">(Bỏ trống nếu giữ nguyên)</span></label>
+<label class="form-label fw-bold">Mật khẩu mới: <span class="text-muted fw-normal small">(Bỏ trống nếu giữ nguyên)</span></label>
                         <input type="password" name="password" class="form-control" placeholder="Nhập mật khẩu mới...">
                     </div>
                     <div class="mb-3">
