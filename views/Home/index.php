@@ -1,5 +1,4 @@
 <?php
-// Nhúng file kiểm tra xác thực quyền quản trị[cite: 13]
 require_once __DIR__ . '/../../includes/auth.php';
 ?>
 <!DOCTYPE html>
