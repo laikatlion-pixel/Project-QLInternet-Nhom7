@@ -6,7 +6,6 @@ class AuthModel {
         $this->pdo = $pdo;
     }
 
-    // Kiểm tra thông tin đăng nhập của Admin/Nhân viên
     public function login($username, $password) {
         $stmt = $this->pdo->prepare("SELECT * FROM user WHERE username = :username AND password = :password");
         $stmt->execute([
