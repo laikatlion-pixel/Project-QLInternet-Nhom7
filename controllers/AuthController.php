@@ -1,46 +1,54 @@
 <?php
-require_once __DIR__ . '/../model/AuthModel.php';
+declare(strict_types=1);
 
-class AuthController {
-    private $authModel;
+require_once __DIR__ . '/../models/User.php';
 
-    public function __construct($pdo) {
-        $this->authModel = new AuthModel($pdo);
+
+class AuthController extends Controller
+{
+    private User $userModel;
+
+    public function __construct()
+    {
+        $this->userModel = new User();
     }
 
-    public function login() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+    public function login(): void
+    {
+        if (isset($_SESSION['user'])) {
+            $this->redirect('index.php?c=dashboard&a=index');
         }
 
-        $error = "";
+        $error = '';
 
-        if ($_SERVER["REQUEST_METHOD"] === "POST") {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = trim($_POST['username'] ?? '');
             $password = trim($_POST['password'] ?? '');
 
-            $user = $this->authModel->login($username, $password);
-
-            if ($user) {
-                $_SESSION['user'] = $user;
-                header("Location: index.php?route=home");
-                exit();
+            if ($username === '' || $password === '') {
+                $error = "Vui lòng nhập đầy đủ thông tin!";
             } else {
-                $error = "Tài khoản hoặc mật khẩu không đúng!";
+                $user = $this->userModel->authenticate($username, $password);
+                if ($user) {
+                    $_SESSION['user'] = [
+                        'id'       => $user['id'],
+                        'username' => $user['username'],
+                        'fullname' => $user['fullname'],
+                        'role'     => $user['role'],
+                    ];
+                    $this->redirect('index.php?c=dashboard&a=index');
+                }
+                $error = "Tài khoản hoặc mật khẩu không chính xác!";
             }
         }
 
-        require_once __DIR__ . '/../views/auth/login.php';
+        $this->render('auth/login', ['error' => $error], 'none');
     }
 
-    public function logout() {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        unset($_SESSION['user']);
+    public function logout(): void
+    {
+        session_unset();
         session_destroy();
-        header("Location: index.php?route=login");
-        exit();
+        $this->redirect('index.php?c=auth&a=login');
     }
 }
-?>
