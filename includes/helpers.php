@@ -1,14 +1,5 @@
 <?php
-/**
- * File chứa các hàm tiện ích cho Hệ thống Quản lý Tiệm Net
- */
 
-/**
- * Quy đổi số dư tài khoản ra thời gian chơi (Giờ & Phút) theo giá tiền khu vực
- * @param int $balance Số dư hiện tại của tài khoản (VNĐ)
- * @param int $price_per_hour Đơn giá 1 giờ chơi của máy/khu vực (VNĐ)
- * @return string Chuỗi định dạng thời gian (ví dụ: "1 giờ 20 phút" hoặc "40 phút")
- */
 function tinhThoiGianChoi($balance, $price_per_hour) {
     if ($balance <= 0 || $price_per_hour <= 0) {
         return "0 phút";
@@ -28,9 +19,7 @@ function tinhThoiGianChoi($balance, $price_per_hour) {
     return $minutes . " phút";
 }
 
-/**
- * Hàm định dạng tiền tệ VNĐ cho giao diện
- */
+
 function formatVND($amount) {
     return number_format($amount, 0, ',', '.') . ' đ';
 }
