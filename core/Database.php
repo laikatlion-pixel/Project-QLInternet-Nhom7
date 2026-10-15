@@ -1,16 +1,11 @@
 <?php
 declare(strict_types=1);
 
-/**
- * Lớp kết nối CSDL theo Singleton Pattern (tránh mở nhiều kết nối trùng lặp)
- */
 class Database
 {
     private static ?PDO $instance = null;
 
-    /**
-     * Lấy đối tượng PDO duy nhất (singleton)
-     */
+    
     public static function getConnection(): PDO
     {
         if (self::$instance === null) {
@@ -36,9 +31,7 @@ class Database
         return self::$instance;
     }
 
-    /**
-     * Cấm khởi tạo bên ngoài (singleton)
-     */
+  
     private function __construct() {}
     private function __clone() {}
 }
