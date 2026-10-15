@@ -1,90 +1,90 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
+declare(strict_types=1);
 
-class ClientController {
-    private $pdo;
+require_once __DIR__ . '/../models/Machine.php';
+require_once __DIR__ . '/../models/Member.php';
 
-    public function __construct($pdo) {
-        $this->pdo = $pdo;
+class ClientController extends Controller
+{
+    private Machine $machineModel;
+    private Member $memberModel;
+
+    public function __construct()
+    {
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
+        $this->machineModel = new Machine();
+        $this->memberModel  = new Member();
     }
 
-    public function login() {
-        date_default_timezone_set('Asia/Ho_Chi_Minh');
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        $error = "";
-        $may_id = (int)($_GET["may_id"] ?? 1);
-
-        $stmMay = $this->pdo->prepare("SELECT * FROM may WHERE id = :id");
-        $stmMay->execute(["id" => $may_id]);
-        $current_may = $stmMay->fetch();
+    public function login(): void
+    {
+        $may_id = (int)($_GET['may_id'] ?? 1);
+        $current_may = $this->machineModel->find($may_id);
 
         if (!$current_may) {
-            die("Lỗi: Máy tính không tồn tại!");
+            die("Lỗi: Máy tính không tồn tại trên hệ thống!");
         }
 
-        if ($_SERVER["REQUEST_METHOD"] === "POST") {
-            $username = trim($_POST["username"] ?? "");
-            $password = trim($_POST["password"] ?? "");
+        $error = '';
+        $loginSuccess = false;
+        $loggedInUser = '';
 
-            $stmMem = $this->pdo->prepare("SELECT * FROM members WHERE username = :username AND password = :password");
-            $stmMem->execute(["username" => $username, "password" => $password]);
-            $member = $stmMem->fetch();
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $username = trim($_POST['username'] ?? '');
+            $password = trim($_POST['password'] ?? '');
 
-            if (!$member) {
-                $error = "Tài khoản hoặc mật khẩu không hợp lệ!";
-            } elseif (($member["balance"] ?? 0) <= 0) {
-                $error = "Tài khoản đã hết tiền!";
-            } else {
+            $member = $this->memberModel->authenticateClient($username, $password, $error);
+
+            if ($member) {
                 $now = date('Y-m-d H:i:s');
-                $sql = "UPDATE may SET status = 'online', last_login = :now_time WHERE id = :id";
-                $stm = $this->pdo->prepare($sql);
-                $stm->execute(["now_time" => $now, "id" => $may_id]);
+                $this->machineModel->markOnline($may_id, $now);
 
-                $_SESSION['client_user'] = $member['username'];
+                $_SESSION['client_user']   = $member['username'];
                 $_SESSION['client_may_id'] = $may_id;
 
-                header("Location: index.php?route=client_login&status=success&may_id=" . $may_id . "&user=" . urlencode($username));
-                exit();
+                $this->redirect(
+                    'index.php?c=client&a=login&status=success&may_id=' . $may_id
+                    . '&user=' . urlencode($username)
+                );
             }
         }
-        require_once __DIR__ . '/../views/client/login.php';
+
+        if (isset($_GET['status']) && $_GET['status'] === 'success') {
+            $loginSuccess = true;
+            $loggedInUser = $_GET['user'] ?? '';
+        }
+
+        $this->render('client/login', [
+            'current_may'   => $current_may,
+            'may_id'        => $may_id,
+            'error'         => $error,
+            'loginSuccess'  => $loginSuccess,
+            'loggedInUser'  => $loggedInUser,
+        ], 'none');
     }
 
-    public function logout() {
-        date_default_timezone_set('Asia/Ho_Chi_Minh');
-        $may_id = $_GET["may_id"] ?? 0;
-        $username = $_GET["user"] ?? "";
+    public function logout(): void
+    {
+        $may_id   = (int)($_GET['may_id'] ?? 0);
+        $username = $_GET['user'] ?? '';
 
         if ($may_id > 0) {
-            $stmSelect = $this->pdo->prepare("SELECT last_login, hourly_price FROM may WHERE id = :id");
-            $stmSelect->execute(["id" => $may_id]);
-            $may = $stmSelect->fetch();
+            $may = $this->machineModel->find($may_id);
 
             if ($may && !empty($may['last_login'])) {
-                $login_time = strtotime($may['last_login']);
-                $now_time = time();
-                $diff_seconds = $now_time - $login_time;
-                
-                $added_hours = round($diff_seconds / 3600, 2); 
-                $total_cost = $added_hours * ($may['hourly_price'] ?? 0);
+                $login_time   = strtotime($may['last_login']);
+                $diff_seconds = time() - $login_time;
+                $added_hours  = round($diff_seconds / 3600, 2);
+                $total_cost   = $added_hours * ($may['hourly_price'] ?? 0);
 
-                if (!empty($username)) {
-                    $stmUser = $this->pdo->prepare("UPDATE members SET balance = balance - :cost WHERE username = :username");
-                    $stmUser->execute(["cost" => $total_cost, "username" => $username]);
+                if ($username !== '') {
+                    $this->memberModel->deduct($username, $total_cost);
                 }
 
-                $sql = "UPDATE may SET status = 'offline', total_play_hours = total_play_hours + :added_hours WHERE id = :id";
-                $stmUpdate = $this->pdo->prepare($sql);
-                $stmUpdate->execute(["added_hours" => $added_hours, "id" => $may_id]);
+                $this->machineModel->markOfflineAndAddHours($may_id, $added_hours);
             }
         }
-        header("Location: index.php?route=client_login&may_id=" . $may_id);
-        exit();
+
+        $this->redirect('index.php?c=client&a=login&may_id=' . $may_id);
     }
 }
-?>
-                  
